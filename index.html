@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Git &amp; GitHub — Quy trình làm việc nhóm chuẩn (Dành cho đồ án Web)</title>
+<style>
+:root{--bg:#0b1220;--card:#0f1a30;--line:#22304f;--tx:#e2e8f0;--mut:#94a3b8;--main:#10b981;--dev:#3b82f6;--feat:#f59e0b;--pr:#a78bfa;
+ color-scheme:dark;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:165px}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+header{position:sticky;top:0;z-index:10;background:rgba(11,18,32,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px) + 8px) 16px 8px}
+header::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:rgba(11,18,32,.96);z-index:-1}
+.hd{max-width:1000px;margin:0 auto}
+h1{font-size:clamp(17px,2.2vw,21px);margin:0 0 2px;font-weight:800;letter-spacing:-.01em}
+h1 span{color:#22d3ee}
+.sub{font-size:12.5px;color:var(--mut);margin:0 0 4px}
+#mini{width:100%;height:auto;display:block;max-height:105px}
+#mini .nd{cursor:pointer;transition:.3s}
+#mini .nd circle{fill:#1e293b;stroke:#475569;stroke-width:2}
+#mini .nd text{fill:#94a3b8;font-size:13px;font-weight:800;text-anchor:middle}
+#mini .nd.done circle{fill:var(--c);stroke:var(--c)}
+#mini .nd.done text,#mini .nd.on text{fill:#0b1220}
+#mini .nd.on circle{fill:var(--c);stroke:#fff;stroke-width:3;animation:p 1.6s ease-in-out infinite}
+@keyframes p{50%{r:17}}
+main{max-width:880px;margin:0 auto;padding:14px 16px 80px}
+.config-box{background:linear-gradient(135deg,rgba(15,26,48,.9),rgba(30,41,59,.6));border:1px solid rgba(34,211,238,.35);border-radius:12px;padding:12px 16px;margin-bottom:14px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.config-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;color:#22d3ee;margin-bottom:8px}
+.config-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.config-item label{display:block;font-size:11px;font-weight:600;color:var(--mut);margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.config-item input{width:100%;background:#060b16;border:1px solid var(--line);border-radius:6px;padding:6px 10px;color:#fcd34d;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;transition:border-color .2s}
+.config-item input:focus{outline:none;border-color:#22d3ee;box-shadow:0 0 0 2px rgba(34,211,238,.2)}
+.quick-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag-btn{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:#cbd5e1;cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace;transition:all .2s}
+.tag-btn:hover{background:rgba(34,211,238,.15);border-color:#22d3ee;color:#22d3ee}
+.tag-btn.active{background:rgba(245,158,11,.2);border-color:var(--feat);color:#fcd34d}
+.scope{font-size:13.5px;color:#cbd5e1;background:rgba(34,211,238,.07);border:1px solid rgba(34,211,238,.35);border-radius:8px;padding:8px 12px;margin-bottom:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:12.5px;color:var(--mut);margin-bottom:18px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+section.step{position:relative;padding:0 0 36px 64px;opacity:.45;transition:opacity .4s}
+section.step.on{opacity:1}
+section.step::before{content:"";position:absolute;left:21px;top:44px;bottom:-4px;width:3px;background:linear-gradient(var(--c),var(--c2,var(--c)));border-radius:3px;opacity:.6}
+section.step:last-of-type::before{display:none}
+.num{position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;background:var(--c);color:#0b1220;font-weight:800;font-size:20px;display:grid;place-items:center;box-shadow:0 0 0 5px var(--bg)}
+.on .num{box-shadow:0 0 0 5px var(--bg),0 0 24px var(--c)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.on .card{border-color:var(--c)}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:6px}
+.pill{font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 10px;border-radius:99px;border:1px solid}
+.pill.t{background:#1e293b;border-color:#475569;color:#cbd5e1}
+.pill.g{background:#4c1d95;border-color:#8b5cf6;color:#ddd6fe}
+.pill.l{background:#064e3b;border-color:#10b981;color:#6ee7b7}
+.br{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.05);color:var(--c)}
+h2{font-size:20px;margin:6px 0 4px}
+.card p{margin:0 0 12px;color:#b6c2d4;font-size:15px}
+.how{margin:0 0 12px;padding-left:22px;color:#b6c2d4;font-size:15px}
+.how li{margin:5px 0}.how b,.how code{color:#e2e8f0}
+.how code,.card p code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:#060b16;border:1px solid #1e293b;border-radius:5px;padding:1px 6px;color:#fcd34d}
+.blk{margin-top:12px}
+.bl{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-weight:700;margin-bottom:6px;color:#fcd34d}
+.bl.b2{color:#93c5fd}
+.code{background:#060b16;border:1px solid #1e293b;border-radius:10px;padding:8px 0;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;overflow-x:auto}
+.ln{display:flex;align-items:center;gap:12px;padding:5px 14px;white-space:nowrap}
+.ln code{flex:1;color:#e2e8f0}
+.ln code::before{content:"$ ";color:#475569}
+.ln small{color:#fbbf24;font-family:Inter,system-ui,sans-serif;font-size:13px}
+.cp{background:#1e293b;border:1px solid #334155;color:#cbd5e1;border-radius:6px;font-size:12px;padding:2px 8px;cursor:pointer;font-family:inherit;transition:.2s}
+.cp:hover{border-color:#22d3ee;color:#22d3ee}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 10px}
+.chip{font-size:13px;font-weight:600;padding:6px 14px;border-radius:99px;border:1px solid;font-family:ui-monospace,Menlo,Consolas,monospace}
+.chip.m{background:#064e3b;border-color:var(--main);color:#6ee7b7}
+.chip.d{background:#172554;border-color:var(--dev);color:#93c5fd}
+.chip.f{background:#451a03;border-color:var(--feat);color:#fcd34d}
+.ar{color:var(--mut)}
+.lb{font-size:12px;color:var(--mut)}
+.nt,.rule{margin-top:12px;font-size:14px;border-radius:10px;padding:8px 12px}
+.nt{color:#fcd34d;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35)}
+.rule{color:#6ee7b7;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.35)}
+.next{display:inline-block;margin-top:12px;font-size:13px;color:#22d3ee;text-decoration:none}
+.next:hover{text-decoration:underline}
+.errs{margin-top:20px}
+.errs h2{font-size:22px;margin:0 0 14px}
+.err{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.err code{display:block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;color:#fca5a5;margin-bottom:6px;overflow-x:auto;white-space:nowrap}
+.err.ok code{color:#6ee7b7}
+.err span{font-size:14px;color:#b6c2d4}
+.case{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;padding:14px 16px;margin-top:16px}
+.case h3{font-size:16px;margin:0 0 6px;color:#f1f5f9}
+.case p{margin:0 0 8px}
+em.tg{font-style:normal;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;margin-right:8px;border:1px solid;white-space:nowrap}
+em.tg.once{background:#2e1065;border-color:#8b5cf6;color:#ddd6fe}
+em.tg.often{background:#172554;border-color:#3b82f6;color:#93c5fd}
+em.tg.cond{background:#451a03;border-color:#f59e0b;color:#fcd34d}
+.stop{margin-top:12px;font-size:14px;border-radius:10px;padding:8px 12px;color:#fca5a5;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.4)}
+.gi-box{background:#060b16;border:1px solid rgba(34,211,238,.35);border-radius:10px;margin-top:8px;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.25);transition:outline .2s,box-shadow .2s}
+.gi-header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;padding:8px 12px;background:rgba(34,211,238,.08);border-bottom:1px solid rgba(34,211,238,.2);font-size:12.5px;font-weight:700;color:#22d3ee}
+.gi-hint{font-size:12.5px;color:#94a3b8;padding:8px 12px;background:rgba(255,255,255,.02);border-bottom:1px solid #1e293b}
+.gi-hint code{color:#fcd34d;background:#0b1220;padding:1px 5px;border-radius:4px;font-family:ui-monospace,Menlo,Consolas,monospace}
+.gi-pre{margin:0;padding:10px 14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.5;color:#cbd5e1;max-height:220px;overflow-y:auto;white-space:pre}
+.gi-cp{background:rgba(34,211,238,.15);border:1px solid rgba(34,211,238,.4);color:#22d3ee;font-weight:700}
+.gi-cp:hover{background:rgba(34,211,238,.3);color:#fff}
+.gi-jump-btn{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:6px;background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.35);color:#22d3ee;cursor:pointer;transition:all .2s}
+.gi-jump-btn:hover{background:rgba(34,211,238,.25);color:#fff}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}#mini .nd.on circle{animation:none}section.step{transition:none}}
+@media (max-width:560px){section.step{padding-left:52px}.num{width:36px;height:36px;font-size:17px}section.step::before{left:17px;top:38px}.ln small{display:none}html{scroll-padding-top:200px}}
+</style>
+</head>
+<body>
+<header><div class="hd">
+  <h1>Quy trình làm việc nhóm với <span>Git &amp; GitHub</span></h1>
+  <p class="sub">Nhánh feature đã tạo sẵn trên GitHub Web · Đứng tại nhánh riêng pull develop · Code xong push thẳng nhánh mình</p>
+  <svg id="mini" viewBox="0 0 1000 150" role="img" aria-label="Sơ đồ luồng nhánh thực tế">
+    <line x1="20" y1="25" x2="980" y2="25" stroke="#10b981" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="70" x2="780" y2="70" stroke="#3b82f6" stroke-width="4" stroke-linecap="round"/>
+    <line x1="140" y1="125" x2="620" y2="125" stroke="#f59e0b" stroke-width="4" stroke-linecap="round"/>
+    <!-- Nhánh feature tạo sẵn từ develop -->
+    <path d="M70 70 C 100 70, 110 125, 140 125" fill="none" stroke="#f59e0b" stroke-width="3"/>
+    <!-- Pull develop thẳng xuống feature branch -->
+    <path d="M350 70 L 350 118" fill="none" stroke="#3b82f6" stroke-width="3" stroke-dasharray="5 4"/>
+    <polygon points="345,114 355,114 350,123" fill="#3b82f6"/>
+    <!-- PR từ feature vào develop -->
+    <path d="M620 125 C 660 125, 670 70, 710 70" fill="none" stroke="#a78bfa" stroke-width="3" stroke-dasharray="7 5"/>
+    <!-- PR từ develop vào main -->
+    <path d="M780 70 C 820 70, 830 25, 870 25" fill="none" stroke="#a78bfa" stroke-width="3" stroke-dasharray="7 5"/>
+    <g fill="#94a3b8" font-size="12" font-family="ui-monospace,Menlo,Consolas,monospace">
+      <text x="20" y="14">main (phiên bản ổn định)</text>
+      <text x="20" y="49">develop (tích hợp)</text>
+      <text id="svgFeatName" x="375" y="145">feature/a</text>
+    </g>
+    <g id="nodes"></g>
+  </svg>
+</div></header>
+
+<main>
+  <!-- Bộ cấu hình tương tác động cho sinh viên -->
+  <div class="config-box">
+    <div class="config-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span>⚙️ TÙY CHỈNH THÔNG SỐ (TỰ ĐỘNG CẬP NHẬT TẤT CẢ CÂU LỆNH BÊN DƯỚI)</span>
+      <button class="gi-jump-btn" id="btnScrollGitignore" type="button">📄 Mẫu .gitignore chuẩn</button>
+    </div>
+    <div class="config-grid">
+      <div class="config-item">
+        <label for="cfgBranch">Nhánh Feature riêng của bạn:</label>
+        <input type="text" id="cfgBranch" value="feature/a" spellcheck="false">
+        <div class="quick-tags">
+          <span class="tag-btn active" data-val="feature/a">feature/a</span>
+          <span class="tag-btn" data-val="feature/b">feature/b</span>
+          <span class="tag-btn" data-val="feature/c">feature/c</span>
+          <span class="tag-btn" data-val="feature/d">feature/d</span>
+        </div>
+      </div>
+      <div class="config-item">
+        <label for="cfgRepo">URL Repository GitHub của nhóm:</label>
+        <input type="text" id="cfgRepo" value="https://github.com/YOUR_ORGANIZATION/YOUR_PROJECT.git" spellcheck="false">
+      </div>
+    </div>
+  </div>
+
+  <div class="scope">
+    💡 <b>Nguyên lý vận hành thực tế:</b> Leader và nhóm đã <b>tạo sẵn các nhánh feature trên GitHub Web</b>. 
+    Thành viên chỉ cần clone code về máy, chuyển sang nhánh riêng của mình <b>đúng 1 lần duy nhất</b>. 
+    Hàng ngày khi làm việc: <b>Đứng ngay tại nhánh riêng để kéo code develop</b> và <b>push code thẳng lên nhánh riêng</b> mà không cần phải chuyển đổi qua lại giữa develop!
+  </div>
+
+  <div class="legend">
+    <span><i style="background:var(--main)"></i><b>main</b>: chỉ chứa code hoàn chỉnh, chốt nộp đồ án</span>
+    <span><i style="background:var(--dev)"></i><b>develop</b>: nhánh tích hợp chung của cả nhóm</span>
+    <span><i style="background:var(--feat)"></i><b>feature/*</b>: nhánh riêng của từng thành viên (tạo sẵn trên GitHub)</span>
+  </div>
+
+  <div id="steps"></div>
+
+  <div class="errs">
+    <h2>🛠 Xử lý các tình huống thường gặp khi làm việc nhóm</h2>
+    <div class="err">
+      <code>error: failed to push some refs ... [rejected] (fetch first)</code>
+      <span>Nhánh riêng của bạn trên GitHub có commit mới hơn máy của bạn (do bạn hoặc ai đó push từ trước). Hãy chạy lệnh: <code>git pull --rebase origin &lt;tên-nhánh-của-bạn&gt;</code> để tích hợp commit về máy trước khi push lại.</span>
+    </div>
+    <div class="err">
+      <code>error: cannot pull with rebase: You have unstaged changes</code>
+      <span>Bạn đang có file viết dở chưa commit nên Git chặn không cho pull. Hãy chạy <code>git add .</code> và <code>git commit -m "Lưu tiến độ trước khi pull"</code> rồi mới chạy lại lệnh pull.</span>
+    </div>
+    <div class="err">
+      <code>error: The following untracked working tree files would be overwritten by checkout: &lt;tệp&gt;</code>
+      <span>Ở máy bạn đang có tệp (ví dụ <code>README.md</code>) chưa commit mà trên nhánh sắp chuyển sang cũng có tệp này. Để tránh mất dữ liệu, hãy xóa tệp ở máy nếu không cần (lệnh: <code>Remove-Item &lt;tệp&gt;</code>) hoặc đổi tên tệp (ví dụ <code>README_backup.md</code>) rồi chạy lại lệnh <code>git switch</code>.</span>
+    </div>
+    <div class="err">
+      <code>fatal: not a git repository (or any of the parent directories)</code>
+      <span>Terminal đang mở ở sai thư mục. Hãy đảm bảo bạn dùng lệnh <code>cd</code> để đi vào đúng thư mục chứa tệp <b>pom.xml</b> (nơi có thư mục ẩn <code>.git</code>).</span>
+    </div>
+    <div class="err ok">
+      <code>Everything up-to-date</code>
+      <span>Tất cả commit ở máy bạn đã được đẩy lên nhánh riêng trên GitHub thành công. Không có gì cần xử lý.</span>
+    </div>
+  </div>
+</main>
+
+<script>
+var W = '#a78bfa';
+var cfgBranch = document.getElementById('cfgBranch');
+var cfgRepo = document.getElementById('cfgRepo');
+var svgFeatName = document.getElementById('svgFeatName');
+
+function getBranch() {
+  var b = cfgBranch.value.trim();
+  return b ? b : 'feature/a';
+}
+
+function getRepo() {
+  var r = cfgRepo.value.trim();
+  return r ? r : 'https://github.com/YOUR_ORGANIZATION/YOUR_PROJECT.git';
+}
+
+function getRepoDir() {
+  var r = getRepo();
+  var m = r.match(/\/([^\/]+?)(\.git)?$/);
+  return (m && m[1]) ? m[1] : 'YOUR_PROJECT';
+}
+
+var GITIGNORE_TEMPLATE = 
+'# ==========================================\n' +
+'# FILE .gitignore CHUẨN CHO ĐỒ ÁN JAVA WEB (MAVEN)\n' +
+'# Đặt tại thư mục gốc dự án (ngang hàng pom.xml)\n' +
+'# ==========================================\n\n' +
+'# 1. Thư mục build & file biên dịch (BẮT BUỘC CHẶN)\n' +
+'target/\n' +
+'*.class\n' +
+'*.war\n' +
+'*.ear\n' +
+'*.jar\n\n' +
+'# 2. File cấu hình bí mật & biến môi trường (KHÔNG ĐƯỢC PUSH)\n' +
+'.env\n' +
+'.env.*\n' +
+'!.env.example\n\n' +
+'# 3. Thư mục & file cấu hình của IDE (VS Code, Eclipse, IntelliJ)\n' +
+'.idea/\n' +
+'*.iml\n' +
+'.vscode/\n' +
+'.settings/\n' +
+'.project\n' +
+'.classpath\n' +
+'.factorypath\n\n' +
+'# 4. Hệ điều hành & file tạm hệ thống\n' +
+'.DS_Store\n' +
+'Thumbs.db\n' +
+'desktop.ini\n' +
+'*.log\n' +
+'*.tmp\n' +
+'*.bak\n\n' +
+'# 5. Module Python / Chatbot AI RAG (nếu có)\n' +
+'__pycache__/\n' +
+'*.py[cod]\n' +
+'.venv/\n' +
+'venv/\n' +
+'env/\n';
+
+function buildGitignoreBox() {
+  return '<div class="gi-box" id="boxGitignore">' +
+    '<div class="gi-header">' +
+      '<span>📄 MẪU FILE .gitignore CHUẨN (JAVA WEB &amp; MAVEN)</span>' +
+      '<button class="cp gi-cp" data-c="' + esc(GITIGNORE_TEMPLATE) + '">📋 Sao chép toàn bộ .gitignore</button>' +
+    '</div>' +
+    '<div class="gi-hint">' +
+      '💡 <b>Hướng dẫn:</b> Tạo tệp tên chính xác là <code>.gitignore</code> tại thư mục gốc dự án (ngang hàng với <code>pom.xml</code>), bấm nút <b>Sao chép toàn bộ .gitignore</b> ở trên rồi dán vào tệp trước khi gõ lệnh commit.' +
+    '</div>' +
+    '<pre class="gi-pre"><code>' + esc(GITIGNORE_TEMPLATE) + '</code></pre>' +
+  '</div>';
+}
+
+function buildSteps() {
+  var B = getBranch();
+  var U = getRepo();
+  var D = getRepoDir();
+
+  return [
+    {
+      c: '#10b981', c2: '#22d3ee', t: 't', lab: 'L', br: 'LEADER · develop', x: 34, y: 70,
+      ti: 'LEADER — ĐẨY CODE NỀN TẢNG LÊN DEVELOP & TẠO SẴN NHÁNH TRÊN WEB',
+      d: 'Dành cho <b>Leader</b> làm <b>một lần duy nhất</b> khi mở đầu dự án để cả nhóm cùng có nhánh làm việc:',
+      cases: [
+        {
+          ti: 'Bước A1 — Push mã nguồn khởi tạo lên develop',
+          d: 'Mở Terminal tại thư mục gốc dự án (nơi có <code>pom.xml</code>) và thực hiện:',
+          blk: [
+            { tg: 'once', l: '1) Khởi tạo Git và liên kết remote với GitHub (nếu chưa có)', cmd: [['git init', 'khởi tạo kho Git local nếu thư mục chưa có .git'], ['git status', 'kiểm tra trạng thái các file'], ['git remote add origin ' + U, 'liên kết với repository trên GitHub (chạy 1 lần)']] },
+            { tg: 'once', l: '2) Tạo file .gitignore chuẩn (BẮT BUỘC TRƯỚC KHI COMMIT)', rawHtml: buildGitignoreBox() },
+            { tg: 'once', l: '3) Commit và đẩy lên nhánh develop', cmd: [['git fetch origin', 'cập nhật danh sách nhánh từ GitHub về máy'], ['git switch develop', 'nếu chưa có: git switch -c develop'], ['git add .', 'giờ đã có .gitignore nên chỉ nạp mã nguồn sạch'], ['git commit -m "Initialize base project"'], ['git push -u origin develop']] }
+          ]
+        },
+        {
+          ti: 'Bước A2 — Leader tạo sẵn các nhánh feature cho thành viên trên GitHub Web',
+          d: 'Sau khi đã có nhánh <code>develop</code> trên GitHub, Leader lên giao diện <b>GitHub Web</b> bấm chọn nhánh <code>develop</code> và tạo sẵn các nhánh cho thành viên:<br>' +
+             '• <code>feature/a</code> (Thành viên phụ trách Module A)<br>' +
+             '• <code>feature/b</code> (Thành viên phụ trách Module B)<br>' +
+             '• <code>feature/c</code> (Thành viên phụ trách Module C)<br>' +
+             '• <code>feature/d</code> (Thành viên phụ trách Module D)',
+          nt: 'Khi nhánh đã có sẵn trên GitHub Web, các thành viên ở máy chỉ cần chuyển vào nhánh của mình (Bước 1) là xong, không cần tạo nhánh lẻ tẻ.'
+        }
+      ]
+    },
+    {
+      c: '#22d3ee', c2: '#fbbf24', t: 't', br: B, x: 170, y: 125,
+      ti: 'BƯỚC 1 — THÀNH VIÊN: CLONE VÀ VÀO THẲNG NHÁNH RIÊNG CỦA MÌNH',
+      d: 'Làm <b>một lần duy nhất</b> khi bắt đầu tham gia dự án. Bạn kéo code về máy và chuyển thẳng sang nhánh riêng của mình:',
+      cases: [
+        {
+          ti: 'Lệnh thực hiện trong Terminal:',
+          blk: [{
+            tg: 'once', l: 'Clone dự án và switch sang nhánh riêng',
+            cmd: [
+              ['git clone ' + U, 'kéo toàn bộ repository về máy'],
+              ['cd ' + D, 'vào đúng thư mục dự án vừa clone'],
+              ['git switch ' + B, 'chuyển thẳng sang nhánh riêng đã tạo sẵn trên GitHub']
+            ]
+          }],
+          nt: 'Lưu ý: Vì nhánh <code>' + B + '</code> đã được tạo sẵn trên GitHub Web, lệnh <code>git switch ' + B + '</code> sẽ tự động tìm thấy và theo dõi nhánh remote tương ứng. Chạy lệnh <code>git branch</code> để xác nhận bạn đang ở đúng nhánh <code>' + B + '</code>.'
+        }
+      ]
+    },
+    {
+      c: '#60a5fa', c2: '#fbbf24', t: 't', br: B, x: 350, y: 125,
+      ti: 'BƯỚC 2 — ĐỒNG BỘ CODE MỚI: PULL DEVELOP THẲNG VÀO NHÁNH RIÊNG',
+      d: 'Mỗi khi bắt đầu ngồi vào bàn code, hoặc khi nghe tin bạn cùng nhóm vừa merge code mới vào <code>develop</code>, bạn muốn lấy code mới nhất về nhánh của mình:',
+      cases: [
+        {
+          ti: 'Cách thực hiện siêu tiện lợi (KHÔNG CẦN CHUYỂN QUA LẠI DEVELOP):',
+          d: 'Bạn <b>vẫn đứng nguyên tại nhánh riêng của mình (' + B + ')</b>, chỉ cần gõ đúng một câu lệnh:',
+          blk: [{
+            tg: 'often', l: 'Kéo code từ nhánh develop trên GitHub gộp thẳng vào nhánh riêng:',
+            cmd: [
+              ['git pull origin develop', 'lấy code mới nhất từ develop gộp thẳng vào ' + B]
+            ]
+          }],
+          nt: 'Lệnh này lấy toàn bộ code mới nhất của cả nhóm trên <code>origin/develop</code> và tự động hợp nhất (merge) vào nhánh <code>' + B + '</code> của bạn một cách an toàn mà không làm mất những gì bạn đang làm.'
+        }
+      ]
+    },
+    {
+      c: '#fbbf24', c2: '#a78bfa', t: 't', br: B, x: 530, y: 125,
+      ti: 'BƯỚC 3 — VÒNG LẶP HÀNG NGÀY: CODE XONG LÀ PUSH THẲNG LÊN NHÁNH RIÊNG',
+      d: 'Đây là công việc bạn làm hàng ngày (90% thời gian): Bạn mở IDE lên viết code trên nhánh <code>' + B + '</code>, kiểm tra chạy ổn định rồi đẩy lên GitHub:',
+      cases: [
+        {
+          ti: 'Các bước lưu và đẩy code lên nhánh riêng:',
+          blk: [{
+            tg: 'often', l: 'Commit và Push lên nhánh của bạn:',
+            cmd: [
+              ['git status', 'kiểm tra danh sách các file bạn vừa sửa'],
+              ['git add .', 'đưa tất cả thay đổi vào vùng chuẩn bị commit'],
+              ['git commit -m "Mô tả tính năng hoặc chức năng bạn vừa làm"'],
+              ['git push origin ' + B, 'đẩy thẳng commit lên nhánh riêng ' + B + ' trên GitHub']
+            ]
+          }],
+          nt: 'Bạn cứ thoải mái code và push lên nhánh <code>' + B + '</code> của mình bao nhiêu lần tùy thích trong ngày. Nhánh riêng là không gian làm việc độc lập của bạn, hoàn toàn không sợ làm ảnh hưởng hay xung đột với ai.'
+        }
+      ]
+    },
+    {
+      c: '#a78bfa', c2: '#60a5fa', t: 'g', br: B + ' → develop', x: 710, y: 98,
+      ti: 'BƯỚC 4 — BÀN GIAO CHỨC NĂNG: TẠO PULL REQUEST (PR) GỘP VÀO DEVELOP',
+      d: 'Khi module của bạn đã hoàn thành trọn vẹn và kiểm tra chạy tốt trên máy, bạn đưa code của mình vào nhánh chung <code>develop</code> để cả nhóm cùng dùng:',
+      flow: [['lb', 'compare (nhánh của bạn)'], ['f', B], ['ar', '→'], ['lb', 'base (nhánh chung)'], ['d', 'develop']],
+      ol: [
+        'Mở trình duyệt vào trang GitHub của repository.',
+        'Vào tab <b>Pull requests</b> $\\rightarrow$ bấm <b>New pull request</b>.',
+        'Chọn nhánh nguồn (<b>compare</b>): <code>' + B + '</code>.',
+        'Chọn nhánh đích (<b>base</b>): <code>develop</code>.',
+        'Bấm <b>Create pull request</b>, thông báo cho Leader hoặc bạn cùng nhóm vào kiểm tra và bấm <b>Merge</b>.'
+      ],
+      rule: 'Sau khi PR được merge vào <code>develop</code>, tính năng của bạn đã chính thức nằm trong nhánh chung của cả nhóm!'
+    },
+    {
+      c: W, c2: '#10b981', t: 'g', br: 'develop → main', x: 880, y: 48,
+      ti: 'BƯỚC 5 — CHỐT ĐỒ ÁN: LEADER PHÁT HÀNH TỪ DEVELOP VÀO MAIN',
+      d: 'Khi toàn bộ các thành viên trong nhóm đều đã merge xong các nhánh feature của mình vào <code>develop</code>, Leader kiểm thử tổng thể lần cuối và đưa lên <code>main</code>:',
+      flow: [['lb', 'compare'], ['d', 'develop'], ['ar', '→'], ['lb', 'base'], ['m', 'main']],
+      ol: [
+        'Trên GitHub Web, Leader tạo Pull Request từ <code>develop</code> vào <code>main</code>.',
+        'Bấm <b>Merge pull request</b> để chốt phiên bản hoàn chỉnh nhất nộp đồ án cho giảng viên.'
+      ],
+      rule: 'Nhánh <code>main</code> là bản hoàn chỉnh cuối cùng, chỉ nhận code từ <code>develop</code> thông qua Pull Request.'
+    }
+  ];
+}
+
+var NS = 'http://www.w3.org/2000/svg';
+var nodes = document.getElementById('nodes');
+var host = document.getElementById('steps');
+
+function esc(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+var TG = { once: 'Chạy một lần', often: 'Chạy thường xuyên', cond: 'Chỉ khi thỏa điều kiện' };
+
+function bh(b) {
+  if (b.rawHtml) {
+    return '<div class="blk"><div class="bl"><span>' + (b.tg ? '<em class="tg ' + b.tg + '">' + TG[b.tg] + '</em>' : '') + b.l + '</span></div>' + b.rawHtml + '</div>';
+  }
+  var all = b.cmd.map(function(c) { return c[0]; }).join('\n');
+  return '<div class="blk"><div class="bl"><span>' + (b.tg ? '<em class="tg ' + b.tg + '">' + TG[b.tg] + '</em>' : '') + b.l + '</span><button class="cp" data-c="' + esc(all) + '">Chép cả khối</button></div><div class="code">' +
+         b.cmd.map(function(c) {
+           return '<div class="ln"><code>' + esc(c[0]) + '</code>' + (c[1] ? '<small>← ' + c[1] + '</small>' : '') + '<button class="cp" data-c="' + esc(c[0]) + '">Chép</button></div>';
+         }).join('') + '</div></div>';
+}
+
+function cs(c) {
+  var h = '<div class="case"><h3>' + c.ti + '</h3>' + (c.d ? '<p>' + c.d + '</p>' : '');
+  if (c.ol) h += '<ol class="how">' + c.ol.map(function(o) { return '<li>' + o + '</li>'; }).join('') + '</ol>';
+  (c.blk || []).forEach(function(b) { h += bh(b); });
+  if (c.ul) h += '<ul class="how">' + c.ul.map(function(o) { return '<li>' + o + '</li>'; }).join('') + '</ul>';
+  if (c.nt) h += '<div class="nt">' + c.nt + '</div>';
+  if (c.stop) h += '<div class="stop">' + c.stop + '</div>';
+  return h + '</div>';
+}
+
+function renderSteps() {
+  var S = buildSteps();
+  nodes.innerHTML = '';
+  host.innerHTML = '';
+  svgFeatName.textContent = getBranch();
+
+  S.forEach(function(s, i) {
+    var lab = (s.lab !== undefined) ? s.lab : i;
+    var g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'nd');
+    g.style.setProperty('--c', s.c);
+    g.innerHTML = '<circle cx="' + s.x + '" cy="' + s.y + '" r="14"/><text x="' + s.x + '" y="' + (s.y + 5) + '">' + lab + '</text>';
+    g.onclick = function() {
+      document.getElementById('s' + i).scrollIntoView();
+    };
+    nodes.appendChild(g);
+
+    var h = '<section class="step" id="s' + i + '" style="--c:' + s.c + ';--c2:' + s.c2 + '"><div class="num">' + lab + '</div><div class="card">' +
+      '<div class="top"><span class="pill ' + (s.lab === 'L' ? 'l' : s.t) + '">' + (s.lab === 'L' ? 'LEADER' : (s.t === 't' ? '&gt;_ TERMINAL' : 'GITHUB WEB')) + '</span>' +
+      (s.lab === 'L' ? '<span class="pill t">&gt;_ TERMINAL</span><span class="pill g">GITHUB WEB</span>' : '') +
+      '<span class="br">' + esc(s.br) + '</span></div>' +
+      '<h2>' + s.ti + '</h2><p>' + s.d + '</p>';
+
+    if (s.flow) h += '<div class="flow">' + s.flow.map(function(f) {
+      return f[0] === 'ar' ? '<span class="ar">→</span>' : f[0] === 'lb' ? '<span class="lb">' + f[1] + '</span>' : '<span class="chip ' + f[0] + '">' + f[1] + '</span>';
+    }).join('') + '</div>';
+
+    if (s.ol) h += '<ol class="how">' + s.ol.map(function(o) { return '<li>' + o + '</li>'; }).join('') + '</ol>';
+
+    (s.blk || []).forEach(function(b) {
+      var all = b.cmd.map(function(c) { return c[0]; }).join('\n');
+      h += '<div class="blk"><div class="bl' + (b.b2 ? ' b2' : '') + '"><span>' + (b.tg ? '<em class="tg ' + b.tg + '">' + TG[b.tg] + '</em>' : '') + b.l + '</span><button class="cp" data-c="' + esc(all) + '">Chép cả khối</button></div><div class="code">' +
+        b.cmd.map(function(c) {
+          return '<div class="ln"><code>' + esc(c[0]) + '</code>' + (c[1] ? '<small>← ' + c[1] + '</small>' : '') + '<button class="cp" data-c="' + esc(c[0]) + '">Chép</button></div>';
+        }).join('') + '</div></div>';
+    });
+
+    (s.cases || []).forEach(function(c) { h += cs(c); });
+
+    if (s.nt) h += '<div class="nt">' + s.nt + '</div>';
+    if (s.rule) h += '<div class="rule">' + s.rule + '</div>';
+    if (i < S.length - 1) h += '<a class="next" href="#s' + (i + 1) + '">Bước tiếp theo ↓</a>';
+    host.insertAdjacentHTML('beforeend', h + '</div></section>');
+  });
+
+  setupObserver();
+}
+
+function setupObserver() {
+  var secs = [].slice.call(document.querySelectorAll('section.step'));
+  var nds = [].slice.call(nodes.children);
+
+  function setActive(k) {
+    secs.forEach(function(s, i) { s.classList.toggle('on', i === k); });
+    nds.forEach(function(n, i) {
+      n.classList.toggle('on', i === k);
+      n.classList.toggle('done', i < k);
+    });
+  }
+
+  var io = new IntersectionObserver(function(en) {
+    en.forEach(function(e) {
+      if (e.isIntersecting) setActive(secs.indexOf(e.target));
+    });
+  }, { rootMargin: '-35% 0px -55% 0px' });
+
+  secs.forEach(function(s) { io.observe(s); });
+  setActive(0);
+}
+
+host.addEventListener('click', function(e) {
+  var b = e.target.closest('.cp');
+  if (!b) return;
+  var t = b.getAttribute('data-c'), o = b.textContent;
+  try {
+    navigator.clipboard.writeText(t).then(function() {
+      b.textContent = 'Đã chép ✓';
+      setTimeout(function() { b.textContent = o; }, 1200);
+    });
+  } catch (_) {}
+});
+
+cfgBranch.addEventListener('input', renderSteps);
+cfgRepo.addEventListener('input', renderSteps);
+
+var btnScroll = document.getElementById('btnScrollGitignore');
+if (btnScroll) {
+  btnScroll.addEventListener('click', function() {
+    var el = document.getElementById('boxGitignore');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.outline = '2px solid #22d3ee';
+      el.style.boxShadow = '0 0 20px rgba(34,211,238,.6)';
+      setTimeout(function() {
+        el.style.outline = '';
+        el.style.boxShadow = '';
+      }, 1600);
+    }
+  });
+}
+
+document.querySelectorAll('.quick-tags .tag-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.quick-tags .tag-btn').forEach(function(b) { b.classList.remove('active'); });
+    this.classList.add('active');
+    cfgBranch.value = this.getAttribute('data-val');
+    renderSteps();
+  });
+});
+
+renderSteps();
+</script>
+</body>
+</html>
